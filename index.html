@@ -2,12 +2,495 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Подключение к GMod серверу</title>
-    <!-- Автоматический редирект на steam:// -->
-    <meta http-equiv="refresh" content="0; url=steam://run/4000//connect/185.97.255.43:27609">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Подключение к GMod серверу | Играть сейчас</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Анимированный фон */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 150, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 50, 100, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* Частицы (эффект снега/звезд) */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            from {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Основной контейнер */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            width: 100%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Карточка */
+        .card {
+            background: rgba(15, 25, 45, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 40px 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Иконка игры */
+        .game-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 15px rgba(255, 107, 53, 0);
+            }
+        }
+
+        .game-icon svg {
+            width: 55px;
+            height: 55px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Заголовки */
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #ff8c42);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .server-ip {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 100px;
+            padding: 8px 20px;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ff8c42;
+            letter-spacing: 1px;
+            backdrop-filter: blur(5px);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #4ade80;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Кнопка подключения */
+        .connect-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #ff6b35, #ff4757);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px -5px rgba(255, 71, 87, 0.3);
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .connect-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px -5px rgba(255, 71, 87, 0.4);
+        }
+
+        /* Информационная секция */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0 20px;
+            text-align: left;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 12px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Прогресс-бар */
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 20px 0 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #ff4757);
+            border-radius: 3px;
+            transition: width 0.1s linear;
+        }
+
+        /* Сообщение об ошибке */
+        .error-message {
+            background: rgba(255, 71, 87, 0.2);
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Футер */
+        .footer {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .connect-btn {
+                padding: 14px 30px;
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <p>Если автоматическое подключение не сработало, 
-       <a href="steam://run/4000//connect/185.97.255.43:27609">нажмите здесь</a>.</p>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+    <div class="card">
+        <!-- Иконка игры -->
+        <div class="game-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 13c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z" fill="white"/>
+            </svg>
+        </div>
+
+        <h1>Garry's Mod</h1>
+        
+        <div class="server-ip" id="serverIp">ЗАГРУЗКА...</div>
+        
+        <div class="status">
+            <span class="status-dot"></span>
+            <span>Сервер онлайн</span>
+        </div>
+
+        <!-- Кнопка подключения -->
+        <button class="connect-btn" id="connectBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+            Подключиться к серверу
+        </button>
+
+        <!-- Информация о сервере -->
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">🎮 Режим игры</div>
+                <div class="info-value" id="gameMode">Sandbox / DarkRP</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">👥 Макс. игроков</div>
+                <div class="info-value" id="maxPlayers">32 / 32</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">📍 Регион</div>
+                <div class="info-value" id="region">🇷🇺 Россия / EU</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">⚡ Версия</div>
+                <div class="info-value" id="version">Latest Stable</div>
+            </div>
+        </div>
+
+        <!-- Прогресс-бар (появляется при нажатии) -->
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Сообщение об ошибке -->
+        <div class="error-message" id="errorMessage">
+            ⚠️ Не удалось подключиться. Возможно, у вас не установлена игра или Steam не запущен.
+            <br>
+            <a href="#" id="fallbackLink" style="color: #ff8c42; margin-top: 8px; display: inline-block;">Нажмите здесь для повторной попытки</a>
+        </div>
+
+        <div class="footer">
+            Нажмите на кнопку — Steam автоматически запустит Garry's Mod и подключит к серверу
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== НАСТРОЙКИ СЕРВЕРА (ИЗМЕНИТЕ ЭТО) ==========
+    const SERVER_CONFIG = {
+        ip: "127.0.0.1:27015",      // IP и порт вашего GMod сервера
+        gameMode: "Sandbox / DarkRP", // Режим игры
+        maxPlayers: "32 / 32",        // Игроков онлайн / Максимум
+        region: "🇷🇺 Россия / EU",      // Регион
+        version: "Latest Stable"      // Версия
+    };
+    // =====================================================
+
+    // Steam URL для подключения
+    const STEAM_URL = `steam://run/4000//connect/${SERVER_CONFIG.ip}`;
+    
+    // Отображаем IP на странице
+    document.getElementById('serverIp').textContent = SERVER_CONFIG.ip;
+    document.getElementById('gameMode').textContent = SERVER_CONFIG.gameMode;
+    document.getElementById('maxPlayers').textContent = SERVER_CONFIG.maxPlayers;
+    document.getElementById('region').textContent = SERVER_CONFIG.region;
+    document.getElementById('version').textContent = SERVER_CONFIG.version;
+
+    // Элементы DOM
+    const connectBtn = document.getElementById('connectBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const errorMessage = document.getElementById('errorMessage');
+    const fallbackLink = document.getElementById('fallbackLink');
+
+    let progressInterval = null;
+
+    // Функция подключения
+    function connectToServer() {
+        // Показываем прогресс-бар
+        progressBar.style.opacity = '1';
+        let progress = 0;
+        
+        // Анимация прогресса
+        if (progressInterval) clearInterval(progressInterval);
+        progressInterval = setInterval(() => {
+            progress += 2;
+            if (progress <= 100) {
+                progressFill.style.width = progress + '%';
+            } else {
+                clearInterval(progressInterval);
+            }
+        }, 20);
+
+        // Прячем предыдущее сообщение об ошибке
+        errorMessage.classList.remove('show');
+
+        // Пытаемся открыть Steam
+        setTimeout(() => {
+            window.location.href = STEAM_URL;
+        }, 100);
+
+        // Проверяем, открылось ли подключение (если нет - показываем ошибку через 3 секунды)
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            progressFill.style.width = '100%';
+            
+            setTimeout(() => {
+                errorMessage.classList.add('show');
+                setTimeout(() => {
+                    progressFill.style.width = '0%';
+                }, 2000);
+            }, 500);
+        }, 3000);
+    }
+
+    // Обработчик кнопки
+    connectBtn.addEventListener('click', connectToServer);
+
+    // Обработчик fallback ссылки
+    fallbackLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = STEAM_URL;
+    });
+
+    // Генерация частиц
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 50;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            const size = Math.random() * 4 + 1;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 10 + 5 + 's';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            particle.style.opacity = Math.random() * 0.5 + 0.2;
+            
+            particlesContainer.appendChild(particle);
+        }
+    }
+    
+    createParticles();
+
+    // Проверка, не открыт ли уже Steam (для Chrome)
+    let steamCheckTimeout;
+    
+    function onBlur() {
+        // Пользователь переключился на Steam - убираем ошибку
+        clearInterval(progressInterval);
+        progressFill.style.width = '100%';
+        setTimeout(() => {
+            errorMessage.classList.remove('show');
+        }, 500);
+    }
+    
+    window.addEventListener('blur', onBlur);
+</script>
+
 </body>
 </html>
