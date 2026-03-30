@@ -379,10 +379,10 @@
 <script>
     // ========== НАСТРОЙКИ СЕРВЕРА (ИЗМЕНИТЕ ЭТО) ==========
     const SERVER_CONFIG = {
-        ip: "127.0.0.1:27015",      // IP и порт вашего GMod сервера
-        gameMode: "Sandbox / DarkRP", // Режим игры
-        maxPlayers: "32 / 32",        // Игроков онлайн / Максимум
-        region: "🇷🇺 Россия / EU",      // Регион
+        ip: "185.97.255.43:27609",      // IP и порт вашего GMod сервера
+        gameMode: "Zombie Plague", // Режим игры
+        maxPlayers: "0 / 32",        // Игроков онлайн / Максимум
+        region: "🇷🇺",      // Регион
         version: "Latest Stable"      // Версия
     };
     // =====================================================
@@ -490,6 +490,22 @@
     }
     
     window.addEventListener('blur', onBlur);
+
+    async function fetchServerInfo() {
+        try {
+            const response = await fetch(`https://api.gametracker.com/v1/server/${SERVER_CONFIG.ip}/info`);
+            const data = await response.json();
+            console.log(data)
+            document.getElementById('serverIp').textContent = SERVER_CONFIG.ip;
+            document.getElementById('gameMode').textContent = SERVER_CONFIG.gameMode;
+            document.getElementById('maxPlayers').textContent = `${data.players}/${data.maxplayers}`;
+            document.getElementById('region').textContent = SERVER_CONFIG.region;
+            document.getElementById('version').textContent = SERVER_CONFIG.version;
+        } catch(e) {
+            console.log('Не удалось получить информацию о сервере');
+        }
+    }
+    fetchServerInfo();
 </script>
 
 </body>
