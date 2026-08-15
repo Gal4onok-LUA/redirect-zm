@@ -395,7 +395,7 @@
 <script>
     // ========== НАСТРОЙКИ СЕРВЕРА (ИЗМЕНИТЕ ЭТО) ==========
     const SERVER_CONFIG = {
-        ip: "185.97.255.43:27609",      // IP и порт вашего GMod сервера
+        ip: "194.147.90.143:24215",      // IP и порт вашего GMod сервера
         gameMode: "", // Режим игры
         maxPlayers: "",        // Игроков онлайн / Максимум
         region: "",      // Регион
@@ -512,7 +512,7 @@
 
     async function fetchServerInfo() {
         try {
-            const response = await fetch(`https://api.gamemonitoring.ru/servers/2619628`);
+            const response = await fetch(`https://api.gamemonitoring.ru/servers/10665182`);
             const data = await response.json();
             const dataresp = data.response
             document.getElementById('servername').textContent = `${dataresp.name}`;
